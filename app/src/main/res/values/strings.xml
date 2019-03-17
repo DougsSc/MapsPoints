@@ -5,4 +5,8 @@
     <string name="bt_nova_rota">NOVA ROTA</string>
     <string name="bt_mostra_rotas">CARREGAR ROTAS</string>
     <string name="tv_rotas_realizadas">Rotas anteriores:</string>
+    <string name="tv_titulo_config">Configurações</string>
+    <string name="tv_config_nickname">Apelido:</string>
+    <string name="tv_config_city">Cidade:</string>
+    <string name="bt_config_start">INICIAR</string>
 </resources>

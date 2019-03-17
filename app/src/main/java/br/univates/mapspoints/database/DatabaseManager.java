@@ -3,12 +3,14 @@ package br.univates.mapspoints.database;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteDatabaseLockedException;
 import android.database.sqlite.SQLiteOpenHelper;
 
 public class DatabaseManager extends SQLiteOpenHelper {
 
-    private static final String DBNAME = "SQLite.db";
+    private static final String DBNAME = "MapsPoints.db";
     private static final int DBVERSION = 1;
     private Context context;
     private SQLiteDatabase db;
@@ -17,50 +19,73 @@ public class DatabaseManager extends SQLiteOpenHelper {
         super(context, DBNAME, null, DBVERSION);
         this.context = context;
 //        db = SQLiteDatabase.openOrCreateDatabase(DBNAME,null);
-        db = getWritableDatabase();
+        if (db == null) {
+            try {
+                db = this.getWritableDatabase();
+            } catch (SQLException sqle) {
+                sqle.printStackTrace();
+            }
+
+        }
+
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
 
+        db.execSQL("CREATE TABLE IF NOT EXISTS route(" +
+                "routeid INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "nickname VARCHAR(30)," +
+                "city VARCHAR(30));");
 
-        String createSQL = "CREATE TABLE \"route\"(\n" +
-                "\t\"routeid\" Integer PRIMARY KEY AUTOINCREMENT,\n" +
-                "\t\"apelido\" Varchar,\n" +
-                "\t\"cidade\" Varchar);";
-        db.execSQL(createSQL);
-
-//        db.execSQL("CREATE TABLE route (" +
-//                "routeid Integer PRIMARY KEY AUTOINCREMENT," +
-//                "apelido varchar," +
-//                "cidade varchar)" +
-//                "");
-        db.execSQL("CREATE TABLE location (" +
-                "locationid int," +
-                "ref_routeid int," +
-                "latitude double," +
-                "longitude double);" +
-                "");
+        db.execSQL("CREATE TABLE IF NOT EXISTS point (" +
+                "pointid INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "ref_routeid INTEGER," +
+                "latitude DOUBLE," +
+                "longitude DOUBLE);");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE route;");
-        db.execSQL("DROP TABLE location;");
+        db.execSQL("DROP TABLE point;");
         onCreate(db);
     }
 
-    public void insert(String table, ContentValues content) {
-        ContentValues c = new ContentValues();
-        c.put("routeid", 1);
-        c.put("apelido", "Teste");
-        c.put("cidade", "Lajeado");
-        db.insertOrThrow("route",null, c);
-//        db.insertOrThrow(table, null, content);
-        Cursor cursor = db.rawQuery("SELECT * FROM route", null);
+    // TRANSACTIONS
+    public void open() {
+        db.beginTransaction();
+    }
 
-        if (cursor.moveToNext()) {
-            System.out.println(cursor.getString(cursor.getColumnIndex("apelido")));
+    public long insert(String tabela, ContentValues obj) {
+        return db.insertOrThrow(tabela, null, obj);
+    }
+
+    public int update(String tabela, ContentValues values, String where){
+        return db.update(tabela, values, where, null);
+    }
+
+    public Cursor select(String sql) {
+        return db.rawQuery(sql, null);
+    }
+
+    public int delete(String tabela, String where) {
+        return db.delete(tabela, where,null);
+    }
+
+    public void finish() {
+        db.setTransactionSuccessful();
+        db.endTransaction();
+    }
+    // TRANSACTIONS
+
+    public void close() {
+        try {
+            db.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+
+        super.close();
     }
 }

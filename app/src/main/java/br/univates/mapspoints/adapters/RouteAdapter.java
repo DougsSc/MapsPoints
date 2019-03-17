@@ -17,7 +17,7 @@ import br.univates.mapspoints.classes.Route;
 public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.MyViewHolder>  {
 
     public List<Route> routes;
-    private Route itemClicked = new Route();
+    private Route itemClicked;
     private Runnable run;
 
     public RouteAdapter() {
