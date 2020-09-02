@@ -1,7 +1,7 @@
 package br.univates.mapspoints.activitys;
 
 import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
@@ -9,7 +9,6 @@ import android.widget.Toast;
 
 import br.univates.mapspoints.R;
 import br.univates.mapspoints.classes.Route;
-import br.univates.mapspoints.database.DatabaseManager;
 
 public class ConfigRouteActivity extends AppCompatActivity implements View.OnClickListener {
 

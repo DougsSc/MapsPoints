@@ -3,12 +3,12 @@ package br.univates.mapspoints.activitys;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.View;
 
 import br.univates.mapspoints.R;
@@ -22,7 +22,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private RecyclerView list_rotas;
     private RouteAdapter routeAdapter;
-    private DatabaseManager dbManager;
 
     private final int REQUEST_GPS_ACCESS = 1;
     private String[] permissoesNecessarias = new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};
@@ -38,7 +37,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         list_rotas = findViewById(R.id.list_rotas);
 
-        dbManager = new DatabaseManager(getApplicationContext());
 
         routeAdapter = new RouteAdapter();
         routeAdapter.setClickRun(new Runnable() {

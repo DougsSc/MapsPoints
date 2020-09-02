@@ -5,32 +5,33 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import java.net.PortUnreachableException;
 import java.util.ArrayList;
 
 import br.univates.mapspoints.R;
-import br.univates.mapspoints.classes.LocationListener;
 import br.univates.mapspoints.classes.Point;
+import br.univates.mapspoints.utils.DefaultLocation;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, android.location.LocationListener {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
     //private LocationListener locationListener;
-    private LocationManager mlocManager;
+//    private LocationManager mlocManager;
+    private DefaultLocation defaultLocation;
 
     private final String TAG = "MapsActivity";
     private int refRouteid;
@@ -50,11 +51,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             history = bundle.getBoolean("history");
             if (refRouteid > 0) {
                 if (!history) {
-                    //locationListener = new LocationListener(this, routeid);
-                    mlocManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
                     if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                        mlocManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
-                        System.out.println("Provider ON");
+//                        System.out.println("DefaultLocation ON");
+                        defaultLocation = DefaultLocation.instance(this);
+                        defaultLocation.addCallback(new LocationCallback() {
+                            @Override
+                            public void onLocationResult(LocationResult locationResult) {
+                                super.onLocationResult(locationResult);
+
+                                Point point = new Point(MapsActivity.this);
+                                point.setRefRouteid(refRouteid);
+                                point.setLatitude(locationResult.getLastLocation().getLatitude());
+                                point.setLongitude(locationResult.getLastLocation().getLongitude());
+                                point.createPoint();
+
+                                LatLng latLng = new LatLng(point.getLatitude(), point.getLongitude());
+                                mMap.addMarker(new MarkerOptions().position(latLng));
+                                mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+
+                                System.out.println("Location: " + locationResult.toString());
+                            }
+                        });
                     }
                 }
             } else {
@@ -69,7 +86,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public void run() {
                 super.run();
                 ArrayList<Point> points = new Point(getApplicationContext()).getPointsByRefRouteid(refRouteid);
-                for(final Point point : points) {
+                for (final Point point : points) {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -85,41 +102,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         if (history) markerPoints();
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        Log.d(TAG, "onLocationChanged: La: " + location.getLatitude() + " - Lo: " + location.getLongitude());
-
-        Point point = new Point(this);
-        point.setRefRouteid(refRouteid);
-        point.setLatitude(location.getLatitude());
-        point.setLongitude(location.getLongitude());
-        point.createPoint();
-
-        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-        mMap.addMarker(new MarkerOptions().position(latLng));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-    }
-
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-        Log.d(TAG, "onStatusChanged: " + status);
-    }
-
-    @Override
-    public void onProviderEnabled(String provider) {
-
-    }
-
-    @Override
-    public void onProviderDisabled(String provider) {
-
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            mMap.setMyLocationEnabled(true);
+        }
     }
 
     @Override
     protected void onStop() {
-        new Point(this).closeConnection();
+        if (defaultLocation != null) defaultLocation.stop();
         super.onStop();
     }
 }
